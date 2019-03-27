@@ -1,5 +1,5 @@
-from .merkletree import Tree
-from .utils import blake2_string
+from tfchain.crypto.merkletree import Tree
+from tfchain.crypto.utils import blake2_string
 
 
 def test_basic_merkletree():

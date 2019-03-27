@@ -2,12 +2,14 @@ from Jumpscale import j
 
 from .Base import TransactionBaseClass, TransactionVersion, InputSignatureHashFactory
 
-from ..FulfillmentTypes import ED25519Signature, SignatureCallbackBase, SignatureRequest
-from ..ConditionTypes import UnlockHash, ConditionUnlockHash
-from ..PrimitiveTypes import BinaryData, Currency
-from ..ERC20 import ERC20Address, ERC20Hash
-from ..IO import CoinInput, CoinOutput
-from ..CryptoTypes import PublicKey
+from tfchain.types.FulfillmentTypes import ED25519Signature, SignatureCallbackBase, SignatureRequest
+from tfchain.types.ConditionTypes import UnlockHash, ConditionUnlockHash
+from tfchain.types.PrimitiveTypes import BinaryData, Currency
+from tfchain.types.ERC20 import ERC20Address, ERC20Hash
+from tfchain.types.IO import CoinInput, CoinOutput
+from tfchain.types.CryptoTypes import PublicKey
+from tfchain.encoders import encoder_sia_get, encoder_rivine_get
+
 
 class TransactionV208(TransactionBaseClass):
     _SPECIFIER = b'erc20 convert tx'
@@ -30,6 +32,7 @@ class TransactionV208(TransactionBaseClass):
         if self._address is None:
             return ERC20Address()
         return self._address
+
     @address.setter
     def address(self, value):
         if value is None:
@@ -42,6 +45,7 @@ class TransactionV208(TransactionBaseClass):
         if self._value is None:
             return Currency()
         return self._value
+
     @value.setter
     def value(self, value):
         if value is None:
@@ -56,13 +60,15 @@ class TransactionV208(TransactionBaseClass):
         used as funding for coin outputs, fees and any other kind of coin output.
         """
         return self._coin_inputs
+
     @coin_inputs.setter
     def coin_inputs(self, value):
         self._coin_inputs = []
         if not value:
             return
         for ci in value:
-            self.coin_input_add(ci.parentid, ci.fulfillment, parent_output=ci.parent_output)
+            self.coin_input_add(ci.parentid, ci.fulfillment,
+                                parent_output=ci.parent_output)
 
     @property
     def refund_coin_output(self):
@@ -78,6 +84,7 @@ class TransactionV208(TransactionBaseClass):
         if self._refund_coin_output is None:
             return []
         return [self._refund_coin_output]
+
     @coin_outputs.setter
     def coin_outputs(self, value):
         if isinstance(value, list):
@@ -87,14 +94,17 @@ class TransactionV208(TransactionBaseClass):
             elif lvalue == 1:
                 value = value[0]
             else:
-                raise ValueError("ThreeBot only can have one coin output, a refund coin output")
+                raise ValueError(
+                    "ThreeBot only can have one coin output, a refund coin output")
         if value is None:
             self._refund_coin_output = None
         elif isinstance(value, CoinOutput):
-            self._refund_coin_output = CoinOutput(value=value.value, condition=value.condition)
+            self._refund_coin_output = CoinOutput(
+                value=value.value, condition=value.condition)
             self._refund_coin_output.id = value.id
         else:
-            raise TypeError("cannot assign a value of type {} to coin outputs".format(type(value)))
+            raise TypeError(
+                "cannot assign a value of type {} to coin outputs".format(type(value)))
 
     def coin_input_add(self, parentid, fulfillment, parent_output=None):
         ci = CoinInput(parentid=parentid, fulfillment=fulfillment)
@@ -111,6 +121,7 @@ class TransactionV208(TransactionBaseClass):
         if self._transaction_fee is None:
             return Currency()
         return self._transaction_fee
+
     @transaction_fee.setter
     def transaction_fee(self, txfee):
         if txfee is None:
@@ -197,10 +208,12 @@ class TransactionV208(TransactionBaseClass):
         else:
             self._transaction_fee = None
         # decode coin inputs
-        self._coin_inputs = [CoinInput.from_json(ci) for ci in data.get('coininputs', []) or []]
+        self._coin_inputs = [CoinInput.from_json(
+            ci) for ci in data.get('coininputs', []) or []]
         # decode refund coin output (if it exists)
         if 'refundcoinoutput' in data:
-            self._refund_coin_output = CoinOutput.from_json(data['refundcoinoutput'])
+            self._refund_coin_output = CoinOutput.from_json(
+                data['refundcoinoutput'])
         else:
             self._refund_coin_output = None
 
@@ -237,6 +250,7 @@ class TransactionV209(TransactionBaseClass):
         if self._address is None:
             return UnlockHash()
         return self._address
+
     @address.setter
     def address(self, value):
         if value is None:
@@ -252,6 +266,7 @@ class TransactionV209(TransactionBaseClass):
         if self._value is None:
             return Currency()
         return self._value
+
     @value.setter
     def value(self, value):
         if value is None:
@@ -264,6 +279,7 @@ class TransactionV209(TransactionBaseClass):
         if self._blockid is None:
             return ERC20Hash()
         return self._blockid
+
     @blockid.setter
     def blockid(self, value):
         if value is None:
@@ -276,6 +292,7 @@ class TransactionV209(TransactionBaseClass):
         if self._transaction_fee is None:
             return Currency()
         return self._transaction_fee
+
     @transaction_fee.setter
     def transaction_fee(self, txfee):
         if txfee is None:
@@ -294,6 +311,7 @@ class TransactionV209(TransactionBaseClass):
         if self._transactionid is None:
             return ERC20Hash()
         return self._transactionid
+
     @transactionid.setter
     def transactionid(self, value):
         if value is None:
@@ -392,12 +410,14 @@ class TransactionV210(TransactionBaseClass, SignatureCallbackBase):
     _SPECIFIER = b'erc20 addrreg tx'
 
     HARDCODED_REGISTRATION_FEE = '10 TFT'
-    SPECIFIER_REGISTRATION_SIGNATURE= BinaryData(value=b'registration', fixed_size=0)
+    SPECIFIER_REGISTRATION_SIGNATURE = BinaryData(
+        value=b'registration', fixed_size=0)
 
     def __init__(self):
         self._public_key = None
         self._signature = None
-        self._registration_fee = Currency(value=TransactionV210.HARDCODED_REGISTRATION_FEE)
+        self._registration_fee = Currency(
+            value=TransactionV210.HARDCODED_REGISTRATION_FEE)
         self._transaction_fee = None
         self._coin_inputs = None
         self._refund_coin_output = None
@@ -413,20 +433,24 @@ class TransactionV210(TransactionBaseClass, SignatureCallbackBase):
         if self._public_key is None:
             return PublicKey()
         return self._public_key
+
     @public_key.setter
     def public_key(self, value):
         if value is None:
             self._public_key = None
             return
         if not isinstance(value, PublicKey):
-            raise TypeError("cannot assign value of type {} as BotRegistration's public key (expected type: PublicKey)".format(type(value)))
-        self._public_key = PublicKey(specifier=value.specifier, hash=value.hash)
+            raise TypeError(
+                "cannot assign value of type {} as BotRegistration's public key (expected type: PublicKey)".format(type(value)))
+        self._public_key = PublicKey(
+            specifier=value.specifier, hash=value.hash)
 
     @property
     def signature(self):
         if self._signature is None:
             return ED25519Signature(as_array=True)
         return self._signature
+
     @signature.setter
     def signature(self, value):
         if value is None:
@@ -441,13 +465,15 @@ class TransactionV210(TransactionBaseClass, SignatureCallbackBase):
         used as funding for coin outputs, fees and any other kind of coin output.
         """
         return self._coin_inputs
+
     @coin_inputs.setter
     def coin_inputs(self, value):
         self._coin_inputs = []
         if not value:
             return
         for ci in value:
-            self.coin_input_add(ci.parentid, ci.fulfillment, parent_output=ci.parent_output)
+            self.coin_input_add(ci.parentid, ci.fulfillment,
+                                parent_output=ci.parent_output)
 
     @property
     def refund_coin_output(self):
@@ -463,6 +489,7 @@ class TransactionV210(TransactionBaseClass, SignatureCallbackBase):
         if self._refund_coin_output is None:
             return []
         return [self._refund_coin_output]
+
     @coin_outputs.setter
     def coin_outputs(self, value):
         if isinstance(value, list):
@@ -472,14 +499,17 @@ class TransactionV210(TransactionBaseClass, SignatureCallbackBase):
             elif lvalue == 1:
                 value = value[0]
             else:
-                raise ValueError("ThreeBot only can have one coin output, a refund coin output")
+                raise ValueError(
+                    "ThreeBot only can have one coin output, a refund coin output")
         if value is None:
             self._refund_coin_output = None
         elif isinstance(value, CoinOutput):
-            self._refund_coin_output = CoinOutput(value=value.value, condition=value.condition)
+            self._refund_coin_output = CoinOutput(
+                value=value.value, condition=value.condition)
             self._refund_coin_output.id = value.id
         else:
-            raise TypeError("cannot assign a value of type {} to coin outputs".format(type(value)))
+            raise TypeError(
+                "cannot assign a value of type {} to coin outputs".format(type(value)))
 
     def coin_input_add(self, parentid, fulfillment, parent_output=None):
         ci = CoinInput(parentid=parentid, fulfillment=fulfillment)
@@ -494,6 +524,7 @@ class TransactionV210(TransactionBaseClass, SignatureCallbackBase):
     @property
     def registration_fee(self):
         return self._registration_fee
+
     @registration_fee.setter
     def registration_fee(self, txfee):
         if txfee is not None:
@@ -507,6 +538,7 @@ class TransactionV210(TransactionBaseClass, SignatureCallbackBase):
         if self._transaction_fee is None:
             return Currency()
         return self._transaction_fee
+
     @transaction_fee.setter
     def transaction_fee(self, txfee):
         if txfee is None:
@@ -608,10 +640,12 @@ class TransactionV210(TransactionBaseClass, SignatureCallbackBase):
         else:
             self._transaction_fee = None
         # decode coin inputs
-        self._coin_inputs = [CoinInput.from_json(ci) for ci in data.get('coininputs', []) or []]
+        self._coin_inputs = [CoinInput.from_json(
+            ci) for ci in data.get('coininputs', []) or []]
         # decode refund coin output (if it exists)
         if 'refundcoinoutput' in data:
-            self._refund_coin_output = CoinOutput.from_json(data['refundcoinoutput'])
+            self._refund_coin_output = CoinOutput.from_json(
+                data['refundcoinoutput'])
         else:
             self._refund_coin_output = None
 
@@ -636,12 +670,14 @@ class TransactionV210(TransactionBaseClass, SignatureCallbackBase):
             # if no parent public key is defined, cannot do anything
             return []
         if self._signature is not None:
-            return [] # nothing to do
+            return []  # nothing to do
         # generate the input hash func
-        input_hash_func = InputSignatureHashFactory(self, TransactionV210.SPECIFIER_REGISTRATION_SIGNATURE).signature_hash_new
+        input_hash_func = InputSignatureHashFactory(
+            self, TransactionV210.SPECIFIER_REGISTRATION_SIGNATURE).signature_hash_new
         # define the input_hash_new generator function,
         # used to create the input hash for creating the signature
         unlockhash = self._public_key.unlockhash
+
         def input_hash_gen(public_key):
             return input_hash_func()
         # create the only signature request

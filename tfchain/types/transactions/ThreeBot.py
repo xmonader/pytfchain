@@ -2,15 +2,17 @@ from Jumpscale import j
 
 from .Base import TransactionBaseClass, TransactionVersion, InputSignatureHashFactory
 
-from ..FulfillmentTypes import ED25519Signature, SignatureCallbackBase, SignatureRequest
-from ..ConditionTypes import ConditionBaseClass, ConditionNil
-from ..ThreeBot import NetworkAddress, BotName
-from ..PrimitiveTypes import BinaryData, Currency
-from ..CryptoTypes import PublicKey
-from ..IO import CoinInput, CoinOutput
+from tfchain.types.FulfillmentTypes import ED25519Signature, SignatureCallbackBase, SignatureRequest
+from tfchain.types.ConditionTypes import ConditionBaseClass, ConditionNil
+from tfchain.types.ThreeBot import NetworkAddress, BotName
+from tfchain.types.PrimitiveTypes import BinaryData, Currency
+from tfchain.types.CryptoTypes import PublicKey
+from tfchain.types.IO import CoinInput, CoinOutput
 from abc import abstractmethod
 
 from tfchain.encoders import BaseRivineObjectEncoder, BaseSiaObjectEncoder
+from tfchain.encoders import encoder_sia_get, encoder_rivine_get
+
 
 class BotTransactionBaseClass(TransactionBaseClass, SignatureCallbackBase):
     BOT_FEE_NETWORK_ADDRESS_UPDATE = Currency(value='20 TFT')

@@ -1,11 +1,10 @@
-from Jumpscale import j
-
-from .Base import TransactionBaseClass, TransactionVersion
-from .Standard import TransactionV1
-from .Minting import TransactionV128, TransactionV129
-from .ThreeBot import BotTransactionBaseClass, TransactionV144, TransactionV145, TransactionV146
-from .ERC20 import TransactionV208, TransactionV209, TransactionV210
+from tfchain.types.transactions.Base import TransactionBaseClass, TransactionVersion
+from tfchain.types.transactions.Standard import TransactionV1
+from tfchain.types.transactions.Minting import TransactionV128, TransactionV129
+from tfchain.types.transactions.ThreeBot import BotTransactionBaseClass, TransactionV144, TransactionV145, TransactionV146
+from tfchain.types.transactions.ERC20 import TransactionV208, TransactionV209, TransactionV210
 import tfchain.errors
+import json
 
 
 class TransactionFactory:
@@ -81,7 +80,7 @@ class TransactionFactory:
         @param obj: JSON-encoded str, bytes, bytearray or JSON-decoded dict that contains a raw JSON Tx.
         """
         if isinstance(obj, (str, bytes, bytearray)):
-            obj = json.loads(obj)
+            obj = json_loads(obj)
         if not isinstance(obj, dict):
             raise TypeError(
                 "only a dictionary or JSON-encoded dictionary is supported as input: type {} is not supported", type(obj))

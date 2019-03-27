@@ -1,4 +1,3 @@
-from Jumpscale import j
 import json
 from tfchain.crypto.utils import blake2_string
 from tfchain.encoders import encoder_rivine_get, encoder_sia_get, BaseRivineObjectEncoder, BaseSiaObjectEncoder
@@ -26,7 +25,7 @@ class TransactionVersion(IntEnum):
     ERC20_ADDRESS_REGISTRATION = 210
 
 
-from ..PrimitiveTypes import Hash
+from tfchain.types.PrimitiveTypes import Hash
 
 
 class TransactionBaseClass(ABC):
@@ -82,7 +81,7 @@ class TransactionBaseClass(ABC):
 
     def __hash__(self):
         if self._id is None:
-            return hash(json.dumps(self.json()))
+            return hash(json_dumps(self.json()))
         return hash(self.id)
 
     def __eq__(self, other):
@@ -294,7 +293,7 @@ class TransactionBaseClass(ABC):
         return True
 
 
-class InputSignatureHashFactory():
+class InputSignatureHashFactory:
     """
     Class that can be used by Transaction consumers,
     to generate a factory that can provide the signature_hash_func callback
